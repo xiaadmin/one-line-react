@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CellProps {
@@ -27,9 +27,15 @@ export const Cell: React.FC<CellProps> = ({
   spawnDelay = 0
 }) => {
   const [justConnected, setJustConnected] = useState(false);
+  const isInitialMount = useRef(true);
 
   // Trigger a temporary state when the cell is newly added to the path
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
     if (isInPath) {
       setJustConnected(true);
       const timer = setTimeout(() => setJustConnected(false), 300);
@@ -56,18 +62,17 @@ export const Cell: React.FC<CellProps> = ({
       `}
       onPointerDown={(e) => onPointerDown(e, x, y)}
       onPointerEnter={(e) => onPointerEnter(e, x, y)}
-      initial={{ scale: 0, opacity: 0 }}
+      initial={{ scale: 0, opacity: 0, y: 20 }}
       animate={
-        isInPath 
+        justConnected 
           ? { scale: [1, 0.85, 1.05, 1], y: [0, 2, -1, 0], opacity: 1 } 
           : { scale: 1, y: 0, opacity: 1 }
       }
-      transition={{ 
-        duration: 0.35, 
-        delay: justConnected ? 0 : spawnDelay,
-        times: [0, 0.4, 0.7, 1],
-        ease: "easeOut"
-      }}
+      transition={
+        justConnected 
+          ? { duration: 0.35, times: [0, 0.4, 0.7, 1], ease: "easeOut" }
+          : { duration: 0.5, delay: spawnDelay, type: "spring", bounce: 0.5 }
+      }
       whileHover={{ scale: 0.95 }}
       whileTap={{ scale: 0.9, y: 2 }}
     >

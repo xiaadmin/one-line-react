@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { getLevel } from '../data/campaignLevels';
+import { getDailyLevel } from '../engine/dailyGenerator';
 import { solveLevel } from '../engine/gameRules';
 import { Board } from '../components/game/Board';
 import { ArrowLeft, SkipForward, Lightbulb, RotateCcw, Settings, Info, Heart, Star, Volume2, VolumeX } from 'lucide-react';
@@ -23,15 +24,27 @@ const GamePage: React.FC = () => {
     status,
     unlockNextLevel,
     settings,
-    updateSettings
+    updateSettings,
+    skipsAvailable,
+    useSkip,
+    completeDaily,
+    addSkip
   } = useGameStore();
 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isHinting, setIsHinting] = useState(false);
+  const [showSkipToast, setShowSkipToast] = useState(false);
 
   useEffect(() => {
     const id = parseInt(levelId || '1', 10);
-    const level = getLevel(id);
+    let level;
+    if (id === 9999) {
+      const today = new Date().toISOString().split('T')[0];
+      level = getDailyLevel(today);
+    } else {
+      level = getLevel(id);
+    }
+    
     if (level) {
       startLevel(level);
     } else {
@@ -40,10 +53,16 @@ const GamePage: React.FC = () => {
   }, [levelId, navigate, startLevel]);
 
   const handleSuccess = () => {
-    unlockNextLevel();
+    if (currentLevel?.id === 9999) {
+      const today = new Date().toISOString().split('T')[0];
+      completeDaily(today);
+      addSkip();
+    } else {
+      unlockNextLevel();
+    }
     
     // Trigger confetti burst
-    const duration = 2000;
+    const duration = 1000;
     const end = Date.now() + duration;
 
     const frame = () => {
@@ -70,7 +89,7 @@ const GamePage: React.FC = () => {
 
     setTimeout(() => {
       setShowSuccessModal(true);
-    }, 800);
+    }, 600);
   };
 
   const handleFail = () => {
@@ -85,8 +104,24 @@ const GamePage: React.FC = () => {
 
   const handleNextLevel = () => {
     setShowSuccessModal(false);
-    if (currentLevel) {
+    if (currentLevel?.id === 9999) {
+      navigate('/');
+    } else if (currentLevel) {
       navigate(`/game/${currentLevel.id + 1}`);
+    }
+  };
+
+  const handleSkipClick = () => {
+    if (currentLevel?.id === 9999) return; // Cannot skip daily level
+    
+    if (skipsAvailable > 0) {
+      const success = useSkip();
+      if (success) {
+        handleSuccess();
+      }
+    } else {
+      setShowSkipToast(true);
+      setTimeout(() => setShowSkipToast(false), 2000);
     }
   };
 
@@ -165,7 +200,7 @@ const GamePage: React.FC = () => {
           <Info size={20} />
         </button>
         <div className="px-6 py-2 bg-slate-800/80 rounded-full font-bold text-slate-200 border border-slate-700 shadow-md">
-          关卡 {currentLevel.id}
+          {currentLevel.id === 9999 ? '每日挑战' : `关卡 ${currentLevel.id}`}
         </div>
         <div className="flex items-center gap-2">
           <button 
@@ -213,13 +248,22 @@ const GamePage: React.FC = () => {
         </button>
         
         <button 
-          className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex flex-col items-center justify-center text-slate-300 active:scale-95 relative"
+          className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center transition-all duration-200 relative
+            ${currentLevel.id === 9999 ? 'opacity-50 cursor-not-allowed bg-slate-800/50 border-slate-800' : 'bg-slate-800/80 border-slate-700 active:scale-95'}
+            ${!currentLevel || currentLevel.id === 9999 ? '' : 'text-slate-300'}
+          `}
+          onClick={handleSkipClick}
+          disabled={currentLevel.id === 9999}
         >
           <SkipForward size={24} />
           <span className="text-[10px] font-bold mt-0.5">跳过</span>
-          <div className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center border-2 border-black">
-            <PlayIcon className="w-2 h-2 text-white" />
-          </div>
+          {currentLevel.id !== 9999 && (
+            <div className={`absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center border-2 border-black text-[10px] font-bold text-white shadow-sm
+              ${skipsAvailable > 0 ? 'bg-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.5)]' : 'bg-slate-600'}
+            `}>
+              {skipsAvailable}
+            </div>
+          )}
         </button>
         
         <button 
@@ -256,31 +300,57 @@ const GamePage: React.FC = () => {
             className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
           >
             <motion.div 
-              initial={{ scale: 0.5, y: 50 }}
-              animate={{ scale: 1, y: 0 }}
-              className="bg-slate-900 border border-slate-700 p-8 rounded-3xl flex flex-col items-center shadow-2xl max-w-xs w-full mx-4"
+              initial={{ scale: 0.5, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              className="bg-slate-900 border border-slate-700 p-8 rounded-[2rem] flex flex-col items-center shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_2px_0_rgba(255,255,255,0.1)] max-w-xs w-full mx-4 relative overflow-hidden"
             >
-              <div className="w-20 h-20 bg-gradient-to-tr from-green-400 to-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(16,185,129,0.5)]">
-                <Star size={40} className="text-white fill-white" />
+              {/* Decorative background glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-blue-500/20 blur-[50px] rounded-full pointer-events-none" />
+
+              <div className="flex gap-3 mb-6 relative z-10">
+                {[1, 2, 3].map((starIndex) => {
+                  const starsCount = attemptsLeft === currentLevel.maxAttempts ? 3 : (attemptsLeft >= currentLevel.maxAttempts - 2 && attemptsLeft > 0 ? 2 : 1);
+                  const isEarned = starIndex <= starsCount;
+                  return (
+                    <motion.div
+                      key={starIndex}
+                      initial={{ scale: 0, rotate: -45, opacity: 0 }}
+                      animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 + starIndex * 0.15, type: "spring", bounce: 0.6 }}
+                    >
+                      <Star 
+                        size={48} 
+                        className={`transition-colors duration-500 ${isEarned ? 'text-yellow-400 fill-yellow-400 drop-shadow-[0_0_15px_rgba(250,204,21,0.6)]' : 'text-slate-700 fill-slate-800'}`} 
+                      />
+                    </motion.div>
+                  );
+                })}
               </div>
-              <h2 className="text-3xl font-black text-white mb-2">通关成功!</h2>
-              <p className="text-slate-400 mb-8 font-medium">恭喜完成关卡 {currentLevel.id}</p>
+
+              <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 mb-2 drop-shadow-sm relative z-10">通关成功!</h2>
+              <p className="text-slate-400 mb-8 font-medium relative z-10">
+                {currentLevel.id === 9999 ? '恭喜完成今日挑战，获得1次跳过机会！' : `恭喜完成关卡 ${currentLevel.id}`}
+              </p>
               
-              <div className="flex gap-4 w-full">
+              <div className="flex gap-4 w-full relative z-10">
                 <button 
                   className="flex-1 py-3 rounded-xl bg-slate-800 text-white font-bold active:scale-95 transition-transform"
                   onClick={() => {
                     setShowSuccessModal(false);
-                    resetPath();
+                    if (currentLevel.id === 9999) {
+                      navigate('/');
+                    } else {
+                      resetPath();
+                    }
                   }}
                 >
-                  重玩
+                  {currentLevel.id === 9999 ? '返回' : '重玩'}
                 </button>
                 <button 
                   className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold shadow-[0_0_15px_rgba(59,130,246,0.5)] active:scale-95 transition-transform"
                   onClick={handleNextLevel}
                 >
-                  下一关
+                  {currentLevel.id === 9999 ? '去闯关' : '下一关'}
                 </button>
               </div>
             </motion.div>
@@ -330,6 +400,20 @@ const GamePage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* Toast Message */}
+      <AnimatePresence>
+        {showSkipToast && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute bottom-32 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full text-sm font-medium border border-slate-700 shadow-xl z-50 whitespace-nowrap"
+          >
+            没有跳过机会了，去完成每日挑战获取吧！
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };

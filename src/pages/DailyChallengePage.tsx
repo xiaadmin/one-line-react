@@ -2,36 +2,17 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { ArrowLeft, Clock, Calendar } from 'lucide-react';
-import { LevelData } from '../types/game';
-
-// Mock daily level
-const dailyLevel: LevelData = {
-  id: 999,
-  mode: 'daily',
-  width: 6,
-  height: 6,
-  startCell: { x: 0, y: 0 },
-  walkableCells: [
-    { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 5, y: 0 },
-    { x: 0, y: 1 }, { x: 1, y: 1 },                 { x: 3, y: 1 }, { x: 4, y: 1 }, { x: 5, y: 1 },
-    { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 },                 { x: 5, y: 2 },
-    { x: 0, y: 3 },                 { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 }, { x: 5, y: 3 },
-    { x: 0, y: 4 }, { x: 1, y: 4 }, { x: 2, y: 4 },                 { x: 4, y: 4 }, { x: 5, y: 4 },
-    { x: 0, y: 5 }, { x: 1, y: 5 }, { x: 2, y: 5 }, { x: 3, y: 5 }, { x: 4, y: 5 }, { x: 5, y: 5 }
-  ],
-  difficulty: 10,
-  maxAttempts: 3,
-  timeLimit: 60,
-};
 
 const DailyChallengePage: React.FC = () => {
   const navigate = useNavigate();
-  const { progress } = useGameStore();
-  const daily = progress.dailyChallenge;
+  const { lastCompletedDailyDate } = useGameStore();
+  
+  const today = new Date().toISOString().split('T')[0];
+  const isCompleted = lastCompletedDailyDate === today;
 
   const handleStart = () => {
-    if (daily.attemptsLeft > 0 && !daily.completed) {
-      navigate('/game/999'); // 999 is daily level ID
+    if (!isCompleted) {
+      navigate('/game/9999'); // 9999 is daily level ID
     }
   };
 
@@ -65,25 +46,17 @@ const DailyChallengePage: React.FC = () => {
           </div>
           
           <div className="text-center mt-4 z-10">
-            <p className="text-slate-400 text-sm mb-1">今日剩余机会</p>
+            <p className="text-slate-400 text-sm mb-1">每日挑战</p>
             <div className="flex justify-center gap-2">
-              {[...Array(3)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`w-4 h-4 rounded-full ${i < daily.attemptsLeft ? 'bg-fuchsia-500 shadow-[0_0_10px_rgba(217,70,239,0.5)]' : 'bg-slate-800'}`} 
-                />
-              ))}
+              <span className="text-slate-300 text-xs">每天通关获得一次默认关卡跳过机会</span>
             </div>
           </div>
         </div>
 
-        {daily.completed ? (
-          <div className="w-full max-w-xs py-4 rounded-2xl bg-green-500/20 text-green-400 font-bold text-xl text-center border border-green-500/50">
-            今日挑战已完成
-          </div>
-        ) : daily.attemptsLeft <= 0 ? (
-          <div className="w-full max-w-xs py-4 rounded-2xl bg-slate-800 text-slate-500 font-bold text-xl text-center">
-            今日机会已用尽
+        {isCompleted ? (
+          <div className="w-full max-w-xs py-4 rounded-2xl bg-green-500/20 text-green-400 font-bold text-xl text-center border border-green-500/50 flex flex-col gap-2">
+            <div>今日挑战已完成</div>
+            <div className="text-sm font-normal">已获得跳过机会</div>
           </div>
         ) : (
           <button 

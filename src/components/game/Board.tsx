@@ -136,9 +136,9 @@ export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
       const isInPath = isCellInPath({ x, y }, path);
       const isCurrent = path.length > 0 && path[path.length - 1].x === x && path[path.length - 1].y === y;
       
-      // Calculate delay for spawn animation based on manhattan distance from start cell
-      const distFromStart = Math.abs(x - level.startCell.x) + Math.abs(y - level.startCell.y);
-      const spawnDelay = distFromStart * 0.05;
+      // Calculate delay for spawn animation based on radial distance from start cell
+      const distFromStart = Math.sqrt(Math.pow(x - level.startCell.x, 2) + Math.pow(y - level.startCell.y, 2));
+      const spawnDelay = distFromStart * 0.06;
 
       row.push(
         <div key={`${x}-${y}`} data-x={x} data-y={y} className="touch-none select-none">

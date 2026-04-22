@@ -9,6 +9,8 @@ interface GameState {
   path: Cell[];
   attemptsLeft: number;
   status: 'idle' | 'playing' | 'success' | 'failed';
+  skipsAvailable: number;
+  lastCompletedDailyDate: string | null;
   
   // Actions
   unlockNextLevel: () => void;
@@ -20,6 +22,9 @@ interface GameState {
   setStatus: (status: 'idle' | 'playing' | 'success' | 'failed') => void;
   decreaseAttempt: () => void;
   resetProgress: () => void;
+  addSkip: () => void;
+  useSkip: () => boolean;
+  completeDaily: (date: string) => void;
 }
 
 const initialProgress: PlayerProgress = {
@@ -49,6 +54,8 @@ export const useGameStore = create<GameState>()(
       path: [],
       attemptsLeft: 0,
       status: 'idle',
+      skipsAvailable: 0,
+      lastCompletedDailyDate: null,
 
       unlockNextLevel: () => set((state) => {
         const currentLevelId = state.currentLevel?.id;
@@ -104,14 +111,34 @@ export const useGameStore = create<GameState>()(
       }),
 
       resetProgress: () => set({
-        progress: initialProgress
+        progress: initialProgress,
+        skipsAvailable: 0,
+        lastCompletedDailyDate: null,
       }),
+
+      addSkip: () => set((state) => ({ skipsAvailable: state.skipsAvailable + 1 })),
+      
+      useSkip: () => {
+        let success = false;
+        set((state) => {
+          if (state.skipsAvailable > 0) {
+            success = true;
+            return { skipsAvailable: state.skipsAvailable - 1 };
+          }
+          return state;
+        });
+        return success;
+      },
+      
+      completeDaily: (date) => set({ lastCompletedDailyDate: date }),
     }),
     {
       name: 'one-line-storage',
       partialize: (state) => ({
         progress: state.progress,
         settings: state.settings,
+        skipsAvailable: state.skipsAvailable,
+        lastCompletedDailyDate: state.lastCompletedDailyDate,
       }),
     }
   )
