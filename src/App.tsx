@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import LevelSelectPage from './pages/LevelSelectPage';
 import GamePage from './pages/GamePage';
@@ -33,7 +33,7 @@ const App: React.FC = () => {
   }, [settings.bgmEnabled]);
 
   return (
-    <BrowserRouter basename="/one-line-react">
+    <HashRouter>
       <div className="min-h-screen bg-slate-950 text-white font-sans overflow-hidden select-none">
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -43,7 +43,7 @@ const App: React.FC = () => {
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 };
 
