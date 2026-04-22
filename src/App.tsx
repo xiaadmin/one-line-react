@@ -33,7 +33,7 @@ const App: React.FC = () => {
   }, [settings.bgmEnabled]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/one-line-react">
       <div className="min-h-screen bg-slate-950 text-white font-sans overflow-hidden select-none">
         <Routes>
           <Route path="/" element={<HomePage />} />
