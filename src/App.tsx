@@ -16,6 +16,11 @@ const App: React.FC = () => {
   }, [settings.bgmEnabled]);
 
   useEffect(() => {
+    // default to 0.03 if not set in old saved state
+    audioManager.setBgmVolume(settings.bgmVolume ?? 0.03);
+  }, [settings.bgmVolume]);
+
+  useEffect(() => {
     audioManager.setSfxEnabled(settings.sfxEnabled);
   }, [settings.sfxEnabled]);
 

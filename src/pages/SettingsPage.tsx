@@ -29,17 +29,34 @@ const SettingsPage: React.FC = () => {
 
       <div className="flex-1 p-6 flex flex-col gap-6">
         <div className="bg-slate-900 rounded-3xl p-4 border border-slate-800 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 text-slate-300">
-              <Music size={24} />
-              <span className="font-medium text-lg">背景音乐</span>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-slate-300">
+                <Music size={24} />
+                <span className="font-medium text-lg">背景音乐</span>
+              </div>
+              <button 
+                className={`w-14 h-8 rounded-full transition-colors relative ${settings.bgmEnabled ? 'bg-blue-500' : 'bg-slate-700'}`}
+                onClick={() => updateSettings({ bgmEnabled: !settings.bgmEnabled })}
+              >
+                <div className={`w-6 h-6 rounded-full bg-white absolute top-1 transition-all ${settings.bgmEnabled ? 'left-7' : 'left-1'}`} />
+              </button>
             </div>
-            <button 
-              className={`w-14 h-8 rounded-full transition-colors relative ${settings.bgmEnabled ? 'bg-blue-500' : 'bg-slate-700'}`}
-              onClick={() => updateSettings({ bgmEnabled: !settings.bgmEnabled })}
-            >
-              <div className={`w-6 h-6 rounded-full bg-white absolute top-1 transition-all ${settings.bgmEnabled ? 'left-7' : 'left-1'}`} />
-            </button>
+            
+            {settings.bgmEnabled && (
+              <div className="flex items-center gap-4 pl-9 pr-2">
+                <span className="text-slate-400 text-sm">音量</span>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="0.1" 
+                  step="0.005"
+                  value={settings.bgmVolume ?? 0.03}
+                  onChange={(e) => updateSettings({ bgmVolume: parseFloat(e.target.value) })}
+                  className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                />
+              </div>
+            )}
           </div>
           
           <div className="h-px bg-slate-800 w-full" />

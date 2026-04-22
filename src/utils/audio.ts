@@ -3,6 +3,7 @@ class AudioManager {
   private isBgmPlaying: boolean = false;
   private bgmEnabled: boolean = true;
   private sfxEnabled: boolean = true;
+  private bgmVolume: number = 0.03;
   
   // Synthesizer state
   private melodyTimer: number | null = null;
@@ -46,6 +47,10 @@ class AudioManager {
     } else if (enabled && !this.isBgmPlaying) {
       this.playBGM();
     }
+  }
+
+  public setBgmVolume(volume: number) {
+    this.bgmVolume = volume;
   }
 
   public setSfxEnabled(enabled: boolean) {
@@ -111,10 +116,10 @@ class AudioManager {
     filter.frequency.setValueAtTime(2000, time);
     filter.frequency.exponentialRampToValueAtTime(400, time + 0.1);
     
-    // Very quiet volume (0.01 max)
+    // Adjustable volume
     gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.01, time + 0.02); // quick attack
-    gain.gain.exponentialRampToValueAtTime(0.001, time + duration - 0.05); // smooth decay
+    gain.gain.linearRampToValueAtTime(this.bgmVolume, time + 0.02); // quick attack
+    gain.gain.exponentialRampToValueAtTime(this.bgmVolume * 0.1, time + duration - 0.05); // smooth decay
     
     osc.connect(filter);
     filter.connect(gain);
@@ -134,10 +139,10 @@ class AudioManager {
     osc.type = 'triangle';
     osc.frequency.value = frequency;
     
-    // Extremely quiet bass (0.01 max)
+    // Adjustable bass volume
     gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.01, time + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
+    gain.gain.linearRampToValueAtTime(this.bgmVolume, time + 0.05);
+    gain.gain.exponentialRampToValueAtTime(this.bgmVolume * 0.1, time + 0.4);
     
     osc.connect(gain);
     gain.connect(this.ctx.destination);

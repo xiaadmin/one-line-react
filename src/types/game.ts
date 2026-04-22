@@ -33,6 +33,7 @@ export type PlayerProgress = {
 
 export type GameSettings = {
   bgmEnabled: boolean;
+  bgmVolume: number;
   sfxEnabled: boolean;
   vibrationEnabled: boolean;
 };

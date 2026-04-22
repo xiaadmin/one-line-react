@@ -35,6 +35,7 @@ const initialProgress: PlayerProgress = {
 
 const initialSettings: GameSettings = {
   bgmEnabled: true,
+  bgmVolume: 0.03,
   sfxEnabled: true,
   vibrationEnabled: true,
 };
