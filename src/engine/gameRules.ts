@@ -30,6 +30,23 @@ export const isValidMove = (targetCell: Cell, path: Cell[], level: LevelData) =>
   return true;
 };
 
+export const isDeadEnd = (path: Cell[], level: LevelData) => {
+  if (path.length === level.walkableCells.length) return false;
+  if (path.length === 0) return false;
+
+  const currentCell = path[path.length - 1];
+  const dx = [0, 0, -1, 1];
+  const dy = [-1, 1, 0, 0];
+
+  for (let i = 0; i < 4; i++) {
+    const targetCell = { x: currentCell.x + dx[i], y: currentCell.y + dy[i] };
+    if (isValidMove(targetCell, path, level)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 // Helper function to find a valid solution path using DFS
 export const solveLevel = (level: LevelData, startPath: Cell[] = []): Cell[] | null => {
   const cellSet = new Set(level.walkableCells.map(c => `${c.x},${c.y}`));

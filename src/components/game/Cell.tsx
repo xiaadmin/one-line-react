@@ -11,6 +11,7 @@ interface CellProps {
   onPointerDown: (e: React.PointerEvent, x: number, y: number) => void;
   onPointerEnter: (e: React.PointerEvent, x: number, y: number) => void;
   size: number;
+  spawnDelay?: number;
 }
 
 export const Cell: React.FC<CellProps> = ({
@@ -22,7 +23,8 @@ export const Cell: React.FC<CellProps> = ({
   isCurrent,
   onPointerDown,
   onPointerEnter,
-  size
+  size,
+  spawnDelay = 0
 }) => {
   const [justConnected, setJustConnected] = useState(false);
 
@@ -54,13 +56,15 @@ export const Cell: React.FC<CellProps> = ({
       `}
       onPointerDown={(e) => onPointerDown(e, x, y)}
       onPointerEnter={(e) => onPointerEnter(e, x, y)}
+      initial={{ scale: 0, opacity: 0 }}
       animate={
         isInPath 
-          ? { scale: [1, 0.85, 1.05, 1], y: [0, 2, -1, 0] } 
-          : { scale: 1, y: 0 }
+          ? { scale: [1, 0.85, 1.05, 1], y: [0, 2, -1, 0], opacity: 1 } 
+          : { scale: 1, y: 0, opacity: 1 }
       }
       transition={{ 
         duration: 0.35, 
+        delay: justConnected ? 0 : spawnDelay,
         times: [0, 0.4, 0.7, 1],
         ease: "easeOut"
       }}

@@ -6,6 +6,7 @@ import { solveLevel } from '../engine/gameRules';
 import { Board } from '../components/game/Board';
 import { ArrowLeft, SkipForward, Lightbulb, RotateCcw, Settings, Info, Heart, Star, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 import { audioManager } from '../utils/audio';
 
@@ -40,9 +41,36 @@ const GamePage: React.FC = () => {
 
   const handleSuccess = () => {
     unlockNextLevel();
+    
+    // Trigger confetti burst
+    const duration = 2000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#3b82f6', '#f43f5e', '#10b981', '#facc15']
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#3b82f6', '#f43f5e', '#10b981', '#facc15']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
+
     setTimeout(() => {
       setShowSuccessModal(true);
-    }, 500);
+    }, 800);
   };
 
   const handleFail = () => {

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Cell as CellType, LevelData } from '../../types/game';
 import { Cell } from './Cell';
-import { isValidMove, isWalkable, isCellInPath, checkWinCondition } from '../../engine/gameRules';
+import { isValidMove, isWalkable, isCellInPath, checkWinCondition, isDeadEnd } from '../../engine/gameRules';
 import { useGameStore } from '../../store/gameStore';
 import { audioManager } from '../../utils/audio';
 
@@ -13,8 +13,9 @@ interface BoardProps {
 }
 
 export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
-  const { path, addCellToPath, status, setStatus } = useGameStore();
+  const { path, addCellToPath, status, setStatus, decreaseAttempt, resetPath } = useGameStore();
   const [isDrawing, setIsDrawing] = useState(false);
+  const [isShaking, setIsShaking] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
 
   // Use a ref to access latest path in touch move event without triggering re-binds
@@ -40,6 +41,11 @@ export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
     window.addEventListener('resize', calculateSize);
     return () => window.removeEventListener('resize', calculateSize);
   }, [level.width]);
+
+  useEffect(() => {
+    // Play spawn sound when level loads
+    audioManager.playSpawnSound();
+  }, [level.id]);
 
   const handlePointerDown = (e: React.PointerEvent, x: number, y: number) => {
     if (status !== 'playing') return;
@@ -67,6 +73,21 @@ export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
         setStatus('success');
         audioManager.playSuccessSound();
         onSuccess();
+      } else if (isDeadEnd(newPath, level)) {
+        // Dead end reached
+        setIsDrawing(false);
+        audioManager.playFailSound();
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
+        
+        setTimeout(() => {
+          decreaseAttempt();
+          resetPath();
+          // If attempts reach 0, status will be set to 'failed' by decreaseAttempt
+          if (useGameStore.getState().attemptsLeft === 0) {
+            onFail();
+          }
+        }, 500);
       }
     } else if (isWalkable(targetCell, level) && !isCellInPath(targetCell, pathRef.current)) {
       // Trying to move to a valid cell but not adjacent -> ignore or show error
@@ -114,6 +135,10 @@ export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
       const isStart = level.startCell.x === x && level.startCell.y === y;
       const isInPath = isCellInPath({ x, y }, path);
       const isCurrent = path.length > 0 && path[path.length - 1].x === x && path[path.length - 1].y === y;
+      
+      // Calculate delay for spawn animation based on manhattan distance from start cell
+      const distFromStart = Math.abs(x - level.startCell.x) + Math.abs(y - level.startCell.y);
+      const spawnDelay = distFromStart * 0.05;
 
       row.push(
         <div key={`${x}-${y}`} data-x={x} data-y={y} className="touch-none select-none">
@@ -127,6 +152,7 @@ export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
             isCurrent={isCurrent}
             onPointerDown={handlePointerDown}
             onPointerEnter={() => tryMoveTo(x, y)}
+            spawnDelay={spawnDelay}
           />
         </div>
       );
@@ -181,14 +207,31 @@ export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
           animate={{ pathLength: 1 }}
           transition={{ duration: 0.15 * path.length, ease: "linear" }}
         />
+        {/* Success glow animation */}
+        {status === 'success' && (
+          <motion.path
+            d={pathString}
+            fill="none"
+            stroke="#ffffff"
+            strokeWidth={cellSize * 0.15}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"
+            initial={{ pathLength: 0, opacity: 1 }}
+            animate={{ pathLength: 1, opacity: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+        )}
       </svg>
     );
   };
 
   return (
-    <div 
+    <motion.div 
       ref={boardRef}
-      className="relative select-none touch-none bg-slate-900/50 p-4 rounded-2xl border border-slate-800"
+      animate={isShaking ? { x: [-10, 10, -10, 10, 0] } : {}}
+      transition={{ duration: 0.4 }}
+      className={`relative select-none touch-none bg-slate-900/50 p-4 rounded-2xl border ${isShaking ? 'border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.5)]' : 'border-slate-800'}`}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
@@ -202,6 +245,6 @@ export const Board: React.FC<BoardProps> = ({ level, onSuccess, onFail }) => {
         {grid}
       </div>
       {renderLines()}
-    </div>
+    </motion.div>
   );
 };

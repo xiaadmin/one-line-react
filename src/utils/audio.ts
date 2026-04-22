@@ -182,6 +182,35 @@ class AudioManager {
     osc.stop(this.ctx.currentTime + 0.1);
   }
 
+  // Sparkling harp-like sweep for level start
+  public playSpawnSound() {
+    this.init();
+    if (!this.ctx || !this.sfxEnabled) return;
+
+    const frequencies = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98];
+    const duration = 0.08;
+
+    frequencies.forEach((freq, index) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      
+      osc.type = 'sine';
+      const startTime = this.ctx!.currentTime + index * duration;
+      
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.05, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration * 2);
+      
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration * 2);
+    });
+  }
+
   public playSuccessSound() {
     this.init();
     if (!this.ctx || !this.sfxEnabled) return;
