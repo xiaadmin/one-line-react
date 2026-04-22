@@ -195,9 +195,9 @@ const GamePage: React.FC = () => {
       <div className="flex items-center justify-between p-4 z-10 relative">
         <button 
           className="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-300 active:scale-95"
-          onClick={() => navigate('/levels')}
+          onClick={() => navigate(currentLevel.id === 9999 ? '/daily' : '/levels')}
         >
-          <Info size={20} />
+          <ArrowLeft size={20} />
         </button>
         <div className="px-6 py-2 bg-slate-800/80 rounded-full font-bold text-slate-200 border border-slate-700 shadow-md">
           {currentLevel.id === 9999 ? '每日挑战' : `关卡 ${currentLevel.id}`}
@@ -242,7 +242,7 @@ const GamePage: React.FC = () => {
       <div className="p-6 flex justify-between items-center z-10 relative pb-10">
         <button 
           className="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-300 active:scale-95"
-          onClick={() => navigate('/levels')}
+          onClick={() => navigate(currentLevel.id === 9999 ? '/daily' : '/levels')}
         >
           <ArrowLeft size={28} />
         </button>
@@ -383,7 +383,7 @@ const GamePage: React.FC = () => {
               <div className="flex gap-4 w-full">
                 <button 
                   className="flex-1 py-3 rounded-xl bg-slate-800 text-white font-bold active:scale-95 transition-transform"
-                  onClick={() => navigate('/levels')}
+                  onClick={() => navigate(currentLevel.id === 9999 ? '/daily' : '/levels')}
                 >
                   返回
                 </button>
