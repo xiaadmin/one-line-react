@@ -111,10 +111,10 @@ class AudioManager {
     filter.frequency.setValueAtTime(2000, time);
     filter.frequency.exponentialRampToValueAtTime(400, time + 0.1);
     
-    // Very quiet volume (0.003 max, down from 0.01)
+    // Very quiet volume (0.01 max)
     gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.003, time + 0.02); // quick attack
-    gain.gain.exponentialRampToValueAtTime(0.0005, time + duration - 0.05); // smooth decay
+    gain.gain.linearRampToValueAtTime(0.01, time + 0.02); // quick attack
+    gain.gain.exponentialRampToValueAtTime(0.001, time + duration - 0.05); // smooth decay
     
     osc.connect(filter);
     filter.connect(gain);
@@ -134,10 +134,10 @@ class AudioManager {
     osc.type = 'triangle';
     osc.frequency.value = frequency;
     
-    // Extremely quiet bass (0.003 max, down from 0.01)
+    // Extremely quiet bass (0.01 max)
     gain.gain.setValueAtTime(0, time);
-    gain.gain.linearRampToValueAtTime(0.003, time + 0.05);
-    gain.gain.exponentialRampToValueAtTime(0.0005, time + 0.4);
+    gain.gain.linearRampToValueAtTime(0.01, time + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.4);
     
     osc.connect(gain);
     gain.connect(this.ctx.destination);
